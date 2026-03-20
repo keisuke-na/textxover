@@ -12,6 +12,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var currentOpacity: Float = 1.0
     var speedLabel: NSTextField?
     var opacityLabel: NSTextField?
+    var tunnelProcess: Process?
+    var tunnelURL: String?
+    var shareMenuItem: NSMenuItem?
+    var tunnelURLMenuItem: NSMenuItem?
+    var copyURLMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -45,6 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        stopTunnel()
         stopDisplayLink()
         if let handle = rustHandle {
             txo_destroy(handle)
@@ -187,6 +193,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
+        // Share WebUI
+        let share = NSMenuItem(title: "Share WebUI...", action: #selector(toggleShare), keyEquivalent: "")
+        shareMenuItem = share
+        menu.addItem(share)
+
+        let urlItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        urlItem.isHidden = true
+        tunnelURLMenuItem = urlItem
+        menu.addItem(urlItem)
+
+        let copyItem = NSMenuItem(title: "Copy URL", action: #selector(copyTunnelURL), keyEquivalent: "")
+        copyItem.isHidden = true
+        copyURLMenuItem = copyItem
+        menu.addItem(copyItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
 
         statusItem.menu = menu
@@ -225,6 +248,163 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let handle = rustHandle {
             txo_update_config(handle, currentSpeed, currentOpacity)
         }
+    }
+
+    // MARK: - Tunnel
+
+    private var appSupportDir: URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("textxover")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    private var cloudflaredPath: String {
+        appSupportDir.appendingPathComponent("cloudflared").path
+    }
+
+    @objc private func toggleShare() {
+        if tunnelProcess != nil {
+            stopTunnel()
+            shareMenuItem?.title = "Share WebUI..."
+            tunnelURLMenuItem?.title = ""
+            tunnelURLMenuItem?.isHidden = true
+            copyURLMenuItem?.isHidden = true
+            return
+        }
+
+        if FileManager.default.fileExists(atPath: cloudflaredPath) {
+            startTunnel()
+        } else {
+            downloadCloudflared()
+        }
+    }
+
+    private func downloadCloudflared() {
+        shareMenuItem?.title = "Downloading cloudflared..."
+        shareMenuItem?.isEnabled = false
+
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+
+            let arch = Self.cpuArchitecture()
+            let urlString = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-\(arch).tgz"
+
+            guard let url = URL(string: urlString),
+                  let data = try? Data(contentsOf: url) else {
+                DispatchQueue.main.async {
+                    self.shareMenuItem?.title = "Share WebUI... (download failed)"
+                    self.shareMenuItem?.isEnabled = true
+                }
+                return
+            }
+
+            // Save .tgz to temp
+            let tgzPath = self.appSupportDir.appendingPathComponent("cloudflared.tgz")
+            FileManager.default.createFile(atPath: tgzPath.path, contents: data)
+
+            // Extract with tar
+            let tar = Process()
+            tar.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+            tar.arguments = ["-xzf", tgzPath.path, "-C", self.appSupportDir.path]
+            do {
+                try tar.run()
+                tar.waitUntilExit()
+            } catch {
+                NSLog("Failed to extract cloudflared: \(error)")
+                DispatchQueue.main.async {
+                    self.shareMenuItem?.title = "Share WebUI... (extract failed)"
+                    self.shareMenuItem?.isEnabled = true
+                }
+                return
+            }
+
+            // Clean up tgz
+            try? FileManager.default.removeItem(at: tgzPath)
+
+            // Make executable
+            let attrs: [FileAttributeKey: Any] = [.posixPermissions: 0o755]
+            try? FileManager.default.setAttributes(attrs, ofItemAtPath: self.cloudflaredPath)
+
+            NSLog("cloudflared downloaded to \(self.cloudflaredPath)")
+
+            DispatchQueue.main.async {
+                self.shareMenuItem?.isEnabled = true
+                self.startTunnel()
+            }
+        }
+    }
+
+    private static func cpuArchitecture() -> String {
+        var sysinfo = utsname()
+        uname(&sysinfo)
+        let machine = withUnsafePointer(to: &sysinfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: Int(_SYS_NAMELEN)) {
+                String(cString: $0)
+            }
+        }
+        return machine.contains("arm64") ? "arm64" : "amd64"
+    }
+
+    private func startTunnel() {
+        shareMenuItem?.title = "Starting tunnel..."
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: cloudflaredPath)
+        process.arguments = ["tunnel", "--url", "http://localhost:\(serverPort)"]
+
+        let pipe = Pipe()
+        process.standardError = pipe  // cloudflared outputs URL to stderr
+
+        tunnelProcess = process
+
+        // Read stderr for tunnel URL
+        DispatchQueue.global().async { [weak self] in
+            let handle = pipe.fileHandleForReading
+            while let self = self, self.tunnelProcess != nil {
+                guard let data = try? handle.availableData, !data.isEmpty else { break }
+                let output = String(data: data, encoding: .utf8) ?? ""
+
+                // Look for the tunnel URL
+                if let range = output.range(of: "https://[a-z0-9-]+\\.trycloudflare\\.com", options: .regularExpression) {
+                    let url = String(output[range])
+                    DispatchQueue.main.async {
+                        self.tunnelURL = url
+                        let shareURL = "\(url)/ui"
+                        self.shareMenuItem?.title = "Stop Sharing"
+                        self.tunnelURLMenuItem?.title = shareURL
+                        self.tunnelURLMenuItem?.isHidden = false
+                        self.copyURLMenuItem?.isHidden = false
+
+                        // Copy to clipboard
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(shareURL, forType: .string)
+                        NSLog("Tunnel URL copied: \(shareURL)")
+                    }
+                }
+            }
+        }
+
+        do {
+            try process.run()
+        } catch {
+            NSLog("Failed to start cloudflared: \(error)")
+            shareMenuItem?.title = "Share WebUI... (failed)"
+            tunnelProcess = nil
+        }
+    }
+
+    private func stopTunnel() {
+        tunnelProcess?.terminate()
+        tunnelProcess = nil
+        tunnelURL = nil
+    }
+
+    @objc private func copyTunnelURL() {
+        guard let url = tunnelURL else { return }
+        let shareURL = "\(url)/ui"
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(shareURL, forType: .string)
     }
 
     @objc private func quit() {
