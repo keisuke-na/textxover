@@ -1,6 +1,7 @@
 use axum::{
     extract::State,
     http::StatusCode,
+    response::Html,
     routing::{get, post},
     Json, Router,
 };
@@ -50,6 +51,7 @@ pub fn start_server(
                 .route("/effect", post(post_effect))
                 .route("/config", post(post_config))
                 .route("/status", get(get_status))
+                .route("/ui", get(get_ui))
                 .layer(cors)
                 .with_state(state);
 
@@ -105,6 +107,10 @@ async fn post_config(
         StatusCode::OK,
         Json(serde_json::json!({ "status": "updated", "config": config })),
     )
+}
+
+async fn get_ui() -> Html<&'static str> {
+    Html(include_str!("../../web/index.html"))
 }
 
 async fn get_status(
