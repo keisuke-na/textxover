@@ -158,8 +158,19 @@
     cursor: pointer;
   }
 
-  #firework-btn:hover {
+  #firework-btn:hover, #pip-btn:hover {
     background: #2a2a3e;
+  }
+
+  #pip-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #aaa;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 8px;
   }
 
   .toast {
@@ -225,6 +236,7 @@
 
   <div class="effect-area">
     <button id="firework-btn">Firework</button>
+    <button id="pip-btn">Mini Window</button>
   </div>
 </div>
 
@@ -291,6 +303,96 @@
       });
     } catch (e) {
       showToast('Connection error');
+    }
+  });
+
+  // Picture-in-Picture mini window
+  document.getElementById('pip-btn').addEventListener('click', async () => {
+    if (!('documentPictureInPicture' in window)) {
+      showToast('This browser does not support Document PiP');
+      return;
+    }
+
+    try {
+      const pipWindow = await documentPictureInPicture.requestWindow({
+        width: 440,
+        height: 380,
+      });
+
+      // Copy stylesheets to PiP window
+      for (const sheet of document.styleSheets) {
+        const style = pipWindow.document.createElement('style');
+        for (const rule of sheet.cssRules) {
+          style.textContent += rule.cssText + '\n';
+        }
+        pipWindow.document.head.appendChild(style);
+      }
+
+      // Clone container into PiP window
+      const clone = document.querySelector('.container').cloneNode(true);
+      // Remove the Mini Window button from clone
+      clone.querySelector('#pip-btn')?.remove();
+      pipWindow.document.body.appendChild(clone);
+
+      // Wire up events on cloned elements
+      const pipInput = clone.querySelector('#comment-input');
+      const pipSendBtn = clone.querySelector('#send-btn');
+      pipInput.focus();
+
+      // Color selection
+      clone.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          clone.querySelector('.color-btn.selected')?.classList.remove('selected');
+          btn.classList.add('selected');
+          selectedColor = btn.dataset.color;
+        });
+      });
+
+      // Send comment
+      async function pipSendComment() {
+        const text = pipInput.value.trim();
+        if (!text) return;
+        try {
+          await fetch(`${API}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text,
+              color: selectedColor,
+              size: clone.querySelector('#size-select').value,
+              type: clone.querySelector('#type-select').value,
+            }),
+          });
+          pipInput.value = '';
+          pipInput.focus();
+        } catch (e) {}
+      }
+
+      pipSendBtn.addEventListener('click', pipSendComment);
+      pipInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          pipSendComment();
+        }
+      });
+
+      // Firework
+      clone.querySelector('#firework-btn')?.addEventListener('click', async () => {
+        try {
+          await fetch(`${API}/effect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'firework',
+              x: 0.3 + Math.random() * 0.4,
+              y: 0.3 + Math.random() * 0.4,
+            }),
+          });
+        } catch (e) {}
+      });
+
+    } catch (e) {
+      showToast('Failed to open mini window');
     }
   });
 
