@@ -141,6 +141,45 @@
     border-color: #fff;
   }
 
+  .reactions {
+    margin-bottom: 16px;
+  }
+
+  .reactions label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .reaction-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .reaction-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #16213e;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, background 0.15s;
+  }
+
+  .reaction-btn:hover {
+    background: #2a2a3e;
+  }
+
+  .reaction-btn:active {
+    transform: scale(1.2);
+  }
+
   .effect-area {
     text-align: center;
     margin-top: 12px;
@@ -234,6 +273,20 @@
     </div>
   </div>
 
+  <div class="reactions">
+    <label>Reaction</label>
+    <div class="reaction-btns">
+      <button class="reaction-btn" data-emoji="👍">👍</button>
+      <button class="reaction-btn" data-emoji="❤️">❤️</button>
+      <button class="reaction-btn" data-emoji="😂">😂</button>
+      <button class="reaction-btn" data-emoji="🎉">🎉</button>
+      <button class="reaction-btn" data-emoji="👏">👏</button>
+      <button class="reaction-btn" data-emoji="😮">😮</button>
+      <button class="reaction-btn" data-emoji="🔥">🔥</button>
+      <button class="reaction-btn" data-emoji="😭">😭</button>
+    </div>
+  </div>
+
   <div class="effect-area">
     <button id="firework-btn">Firework</button>
     <button id="pip-btn">Mini Window</button>
@@ -287,6 +340,23 @@
       e.preventDefault();
       sendComment();
     }
+  });
+
+  // Emoji reactions
+  document.querySelectorAll('.reaction-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await fetch(`${API}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: btn.dataset.emoji,
+            size: 'big',
+            type: 'scroll',
+          }),
+        });
+      } catch (e) {}
+    });
   });
 
   // Firework
