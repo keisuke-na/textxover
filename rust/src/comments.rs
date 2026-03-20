@@ -165,6 +165,11 @@ impl CommentManager {
         expired
     }
 
+    /// Remove a comment by ID
+    pub fn remove_comment(&mut self, id: u32) {
+        self.comments.retain(|c| c.id != id);
+    }
+
     pub fn active_comments(&self) -> &[Comment] {
         &self.comments
     }

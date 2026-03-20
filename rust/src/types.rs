@@ -107,6 +107,34 @@ pub struct StatusResponse {
     pub config: Config,
 }
 
+// Poll types
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PollStartRequest {
+    pub question: String,
+    pub choices: Vec<PollChoice>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PollChoice {
+    pub key: String,   // e.g. "A", "B", "1", "2"
+    pub label: String, // e.g. "Agree", "Disagree"
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PollState {
+    pub active: bool,
+    pub question: String,
+    pub choices: Vec<PollChoiceResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PollChoiceResult {
+    pub key: String,
+    pub label: String,
+    pub count: u32,
+}
+
 /// Vertex for textured quad rendering
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

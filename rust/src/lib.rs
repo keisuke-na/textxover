@@ -12,7 +12,7 @@ use std::collections::VecDeque;
 use std::ffi::CString;
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
-use types::{CommentType, Config};
+use types::{CommentType, Config, PollChoiceResult, PollState};
 
 /// Pending comment stored for Swift to poll
 struct PendingComment {
@@ -43,8 +43,11 @@ struct AppState {
     last_frame_time: std::time::Instant,
     pending_comments: VecDeque<PendingComment>,
     next_comment_id: u32,
-    // Keep last polled CString alive until next poll
     last_polled_text: Option<CString>,
+    poll: Arc<RwLock<PollState>>,
+    // Poll overlay
+    poll_overlay_id: Option<u32>,
+    poll_dirty: bool,
 }
 
 fn parse_hex_color(s: &str) -> u32 {
@@ -83,6 +86,11 @@ pub extern "C" fn txo_init(
     let (tx, rx) = crossbeam_channel::unbounded();
     let active_comments = Arc::new(AtomicU32::new(0));
     let active_particles = Arc::new(AtomicU32::new(0));
+    let poll = Arc::new(RwLock::new(PollState {
+        active: false,
+        question: String::new(),
+        choices: Vec::new(),
+    }));
 
     let state = Box::new(AppState {
         renderer,
@@ -94,6 +102,9 @@ pub extern "C" fn txo_init(
         pending_comments: VecDeque::new(),
         next_comment_id: 1,
         last_polled_text: None,
+        poll,
+        poll_overlay_id: None,
+        poll_dirty: false,
     });
 
     Box::into_raw(state) as *mut std::ffi::c_void
@@ -158,6 +169,17 @@ pub extern "C" fn txo_poll_comment(
                 let config = state.renderer.config.read();
                 state.renderer.comment_manager.set_speed(config.speed);
             }
+            ServerMessage::PollStart(_) | ServerMessage::PollStop => {
+                state.poll_dirty = true;
+            }
+        }
+    }
+
+    // Mark poll dirty if votes changed
+    {
+        let poll = state.poll.read();
+        if poll.active {
+            state.poll_dirty = true;
         }
     }
 
@@ -275,8 +297,8 @@ pub extern "C" fn txo_start_server(handle: *mut std::ffi::c_void, port: u16) {
     let active_comments = state.active_comments.clone();
     let active_particles = state.active_particles.clone();
     let tx = state.tx.clone();
-
-    server::start_server(port, tx, config, active_comments, active_particles);
+    let poll = state.poll.clone();
+    server::start_server(port, tx, config, active_comments, active_particles, poll);
     log::info!("Server started on port {}", port);
 }
 
@@ -302,4 +324,35 @@ pub extern "C" fn txo_render_frame(handle: *mut std::ffi::c_void) {
 
     // Render
     state.renderer.render(dt);
+}
+
+#[no_mangle]
+pub extern "C" fn txo_remove_comment(handle: *mut std::ffi::c_void, comment_id: u32) {
+    if handle.is_null() {
+        return;
+    }
+    let state = unsafe { &mut *(handle as *mut AppState) };
+    state.renderer.comment_manager.remove_comment(comment_id);
+    state.renderer.remove_texture(comment_id);
+}
+
+#[no_mangle]
+pub extern "C" fn txo_get_poll_json(handle: *mut std::ffi::c_void) -> *mut std::ffi::c_char {
+    if handle.is_null() {
+        return std::ptr::null_mut();
+    }
+    let state = unsafe { &*(handle as *mut AppState) };
+    let poll = state.poll.read();
+    let json = serde_json::to_string(&*poll).unwrap_or_default();
+    let cstr = CString::new(json).unwrap_or_default();
+    cstr.into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn txo_free_string(ptr: *mut std::ffi::c_char) {
+    if !ptr.is_null() {
+        unsafe {
+            let _ = CString::from_raw(ptr);
+        }
+    }
 }

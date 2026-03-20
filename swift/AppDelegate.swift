@@ -17,6 +17,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var shareMenuItem: NSMenuItem?
     var tunnelURLMenuItem: NSMenuItem?
     var copyURLMenuItem: NSMenuItem?
+    var pollOverlayCommentId: UInt32 = 0
+    var nextPollCommentId: UInt32 = 900000 // high range to avoid collision with regular comments
+    var lastPollUpdateTime: CFTimeInterval = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -120,6 +123,84 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func getConfig() -> SimpleConfig {
         // Default sizes; will be updated when config API is connected
         return SimpleConfig(fontSizeBig: 48, fontSizeMedium: 36, fontSizeSmall: 24)
+    }
+
+    // MARK: - Poll Overlay
+
+    func updatePollOverlay() {
+        guard let handle = rustHandle else { return }
+
+        guard let jsonPtr = txo_get_poll_json(handle) else { return }
+        let jsonString = String(cString: jsonPtr)
+        txo_free_string(jsonPtr)
+
+        guard let data = jsonString.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let active = json["active"] as? Bool else { return }
+
+        if !active {
+            if pollOverlayCommentId != 0 {
+                txo_remove_comment(handle, pollOverlayCommentId)
+                pollOverlayCommentId = 0
+            }
+            return
+        }
+
+        // Poll is active - rasterize graph
+        guard let question = json["question"] as? String,
+              let choices = json["choices"] as? [[String: Any]] else { return }
+
+        // Build terminal-style bar text
+        let totalVotes = choices.reduce(0) { $0 + (($1["count"] as? Int) ?? 0) }
+        let barWidth = 20
+        let maxLabelLen = choices.reduce(0) { max($0, (($1["label"] as? String) ?? "").count) }
+        let padLen = max(maxLabelLen, 4)
+        var lines: [String] = [question]
+        for c in choices {
+            let key = c["key"] as? String ?? ""
+            let label = c["label"] as? String ?? ""
+            let count = c["count"] as? Int ?? 0
+            let pct = totalVotes > 0 ? Double(count) / Double(totalVotes) : 0
+            let filled = Int(round(pct * Double(barWidth)))
+            let bar = String(repeating: "█", count: filled) + String(repeating: "░", count: barWidth - filled)
+            let paddedLabel = label.padding(toLength: padLen, withPad: " ", startingAt: 0)
+            let line = "\(key) \(paddedLabel) \(bar) \(count) (\(Int(pct * 100))%)"
+            lines.append(line)
+        }
+        let pollText = lines.joined(separator: "\n")
+
+        let fontSize: CGFloat = 42 * screenScale
+        let rasterized = TextRasterizer.rasterize(text: pollText, color: .white, fontSize: fontSize)
+
+        guard rasterized.width > 0 && rasterized.height > 0 else { return }
+
+        // Remove previous poll overlay
+        if pollOverlayCommentId != 0 {
+            txo_remove_comment(handle, pollOverlayCommentId)
+        }
+
+        // Assign a new comment ID for this poll overlay frame
+        nextPollCommentId += 1
+        let commentId = nextPollCommentId
+        pollOverlayCommentId = commentId
+
+        // Submit texture
+        rasterized.rgba.withUnsafeBufferPointer { buffer in
+            guard let baseAddress = buffer.baseAddress else { return }
+            txo_submit_texture(
+                handle,
+                commentId,
+                UInt32(rasterized.width),
+                UInt32(rasterized.height),
+                baseAddress,
+                UInt32(rasterized.rgba.count)
+            )
+        }
+
+        // Place at vertical center of screen
+        let screenHeight = overlayWindow.frame.height * screenScale
+        let centerY = (screenHeight - CGFloat(rasterized.height)) / 2.0
+        txo_start_comment(handle, commentId, 1, Float(centerY))
     }
 
     // MARK: - Menu Bar
@@ -426,6 +507,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             // Process pending comments (rasterize + submit)
             appDelegate.processComments()
+
+            // Update poll overlay (~1fps)
+            let now = CACurrentMediaTime()
+            if now - appDelegate.lastPollUpdateTime > 1.0 {
+                appDelegate.lastPollUpdateTime = now
+                appDelegate.updatePollOverlay()
+            }
 
             // Render frame
             if let handle = appDelegate.rustHandle {

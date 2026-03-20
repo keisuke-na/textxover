@@ -50,4 +50,12 @@ void  txo_start_server(void* handle, uint16_t port);
 // Render one frame (called from CVDisplayLink)
 void  txo_render_frame(void* handle);
 
+// Remove a comment by ID (used for poll overlay replacement)
+void  txo_remove_comment(void* handle, uint32_t comment_id);
+
+// Get poll state as JSON string. Returns null-terminated JSON.
+// Caller must free the returned pointer with txo_free_string.
+char* txo_get_poll_json(void* handle);
+void  txo_free_string(char* ptr);
+
 #endif

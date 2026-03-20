@@ -30,6 +30,45 @@
     color: #fff;
   }
 
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #e94560;
+  }
+
+  .tab-btn:hover {
+    color: #ccc;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Comment tab */
   .input-area {
     display: flex;
     gap: 8px;
@@ -212,6 +251,168 @@
     margin-left: 8px;
   }
 
+  /* Admin tab */
+  .admin-label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .admin-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #0f1a30;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  .admin-input:focus {
+    border-color: #0f3460;
+  }
+
+  .choice-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .choice-key {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    flex-shrink: 0;
+  }
+
+  .choice-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .remove-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: transparent;
+    color: #e94560;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .remove-btn:hover {
+    background: #2a1a2e;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 8px;
+    margin-top: 8px;
+  }
+
+  .btn-primary {
+    background: #e94560;
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #c73e54;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid #444;
+    color: #aaa;
+  }
+
+  .btn-secondary:hover {
+    background: #2a2a3e;
+  }
+
+  .btn-stop {
+    background: #555;
+    color: #fff;
+  }
+
+  .btn-stop:hover {
+    background: #777;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .status-active {
+    background: #1a4d2e;
+    color: #4caf50;
+  }
+
+  .status-inactive {
+    background: #333;
+    color: #888;
+  }
+
+  .results {
+    margin-top: 16px;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+
+  .result-key {
+    width: 30px;
+    font-weight: bold;
+    color: #f5a623;
+  }
+
+  .result-label {
+    width: 80px;
+    font-size: 13px;
+    color: #ccc;
+  }
+
+  .result-bar-bg {
+    flex: 1;
+    height: 24px;
+    background: #0f1a30;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .result-bar {
+    height: 100%;
+    background: #e94560;
+    border-radius: 4px;
+    transition: width 0.3s;
+    min-width: 2px;
+  }
+
+  .result-count {
+    width: 70px;
+    text-align: right;
+    font-size: 13px;
+    color: #aaa;
+  }
+
   .toast {
     position: fixed;
     bottom: 20px;
@@ -236,60 +437,102 @@
 <div class="container">
   <h1>textxover</h1>
 
-  <div class="input-area">
-    <textarea id="comment-input" placeholder="コメントを入力... (Cmd+Enter で送信)" maxlength="100" autofocus></textarea>
-    <button id="send-btn">送信</button>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="comment-tab">Comment</button>
+    <button class="tab-btn" data-tab="admin-tab" id="admin-tab-btn" style="display:none">Admin</button>
   </div>
 
-  <div class="colors">
-    <label>Color</label>
-    <button class="color-btn selected" data-color="#FFFFFF" style="background:#fff"></button>
-    <button class="color-btn" data-color="#FF0000" style="background:#f00"></button>
-    <button class="color-btn" data-color="#FF8800" style="background:#f80"></button>
-    <button class="color-btn" data-color="#FFFF00" style="background:#ff0"></button>
-    <button class="color-btn" data-color="#00FF00" style="background:#0f0"></button>
-    <button class="color-btn" data-color="#00FFFF" style="background:#0ff"></button>
-    <button class="color-btn" data-color="#0088FF" style="background:#08f"></button>
-    <button class="color-btn" data-color="#FF00FF" style="background:#f0f"></button>
-    <button class="color-btn" data-color="#FF88CC" style="background:#f8c"></button>
-  </div>
-
-  <div class="options">
-    <div class="option-group">
-      <label>Size</label>
-      <select id="size-select">
-        <option value="medium" selected>Medium</option>
-        <option value="big">Big</option>
-        <option value="small">Small</option>
-      </select>
+  <!-- Comment Tab -->
+  <div class="tab-content active" id="comment-tab">
+    <div class="input-area">
+      <textarea id="comment-input" placeholder="コメントを入力... (Cmd+Enter で送信)" maxlength="100" autofocus></textarea>
+      <button id="send-btn">送信</button>
     </div>
-    <div class="option-group">
-      <label>Position</label>
-      <select id="type-select">
-        <option value="scroll" selected>Scroll</option>
-        <option value="top">Top (fixed)</option>
-        <option value="bottom">Bottom (fixed)</option>
-      </select>
+
+    <div class="colors">
+      <label>Color</label>
+      <button class="color-btn selected" data-color="#FFFFFF" style="background:#fff"></button>
+      <button class="color-btn" data-color="#FF0000" style="background:#f00"></button>
+      <button class="color-btn" data-color="#FF8800" style="background:#f80"></button>
+      <button class="color-btn" data-color="#FFFF00" style="background:#ff0"></button>
+      <button class="color-btn" data-color="#00FF00" style="background:#0f0"></button>
+      <button class="color-btn" data-color="#00FFFF" style="background:#0ff"></button>
+      <button class="color-btn" data-color="#0088FF" style="background:#08f"></button>
+      <button class="color-btn" data-color="#FF00FF" style="background:#f0f"></button>
+      <button class="color-btn" data-color="#FF88CC" style="background:#f8c"></button>
+    </div>
+
+    <div class="options">
+      <div class="option-group">
+        <label>Size</label>
+        <select id="size-select">
+          <option value="medium" selected>Medium</option>
+          <option value="big">Big</option>
+          <option value="small">Small</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Position</label>
+        <select id="type-select">
+          <option value="scroll" selected>Scroll</option>
+          <option value="top">Top (fixed)</option>
+          <option value="bottom">Bottom (fixed)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="reactions">
+      <label>Reaction</label>
+      <div class="reaction-btns">
+        <button class="reaction-btn" data-emoji="👍">👍</button>
+        <button class="reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="reaction-btn" data-emoji="😂">😂</button>
+        <button class="reaction-btn" data-emoji="🎉">🎉</button>
+        <button class="reaction-btn" data-emoji="👏">👏</button>
+        <button class="reaction-btn" data-emoji="😮">😮</button>
+        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+        <button class="reaction-btn" data-emoji="😭">😭</button>
+      </div>
+    </div>
+
+    <div class="effect-area">
+      <button id="firework-btn">Firework</button>
+      <button id="pip-btn">Mini Window</button>
     </div>
   </div>
 
-  <div class="reactions">
-    <label>Reaction</label>
-    <div class="reaction-btns">
-      <button class="reaction-btn" data-emoji="👍">👍</button>
-      <button class="reaction-btn" data-emoji="❤️">❤️</button>
-      <button class="reaction-btn" data-emoji="😂">😂</button>
-      <button class="reaction-btn" data-emoji="🎉">🎉</button>
-      <button class="reaction-btn" data-emoji="👏">👏</button>
-      <button class="reaction-btn" data-emoji="😮">😮</button>
-      <button class="reaction-btn" data-emoji="🔥">🔥</button>
-      <button class="reaction-btn" data-emoji="😭">😭</button>
-    </div>
-  </div>
+  <!-- Admin Tab (host only) -->
+  <div class="tab-content" id="admin-tab">
+    <h2 style="font-size:16px;margin-bottom:12px;color:#ccc">
+      Poll <span id="status-badge" class="status-badge status-inactive">Inactive</span>
+    </h2>
 
-  <div class="effect-area">
-    <button id="firework-btn">Firework</button>
-    <button id="pip-btn">Mini Window</button>
+    <label class="admin-label">Question</label>
+    <input type="text" class="admin-input" id="poll-question" placeholder="e.g. Which framework should we use?">
+
+    <label class="admin-label">Choices</label>
+    <div id="poll-choices">
+      <div class="choice-row">
+        <input type="text" class="admin-input choice-key" value="A" placeholder="Key">
+        <input type="text" class="admin-input choice-label" placeholder="Choice label">
+        <button class="remove-btn" onclick="removeChoice(this)">x</button>
+      </div>
+      <div class="choice-row">
+        <input type="text" class="admin-input choice-key" value="B" placeholder="Key">
+        <input type="text" class="admin-input choice-label" placeholder="Choice label">
+        <button class="remove-btn" onclick="removeChoice(this)">x</button>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="addChoice()">+ Add choice</button>
+    <br>
+    <button class="btn btn-primary" id="start-btn" onclick="startPoll()">Start Poll</button>
+    <button class="btn btn-stop" id="stop-btn" onclick="stopPoll()" style="display:none">Stop Poll</button>
+
+    <div id="results-section" style="display:none">
+      <h2 style="font-size:16px;margin:16px 0 8px;color:#ccc">Results</h2>
+      <div id="poll-results" class="results"></div>
+    </div>
   </div>
 </div>
 
@@ -298,6 +541,24 @@
 <script>
   const API = window.location.origin;
   let selectedColor = '#FFFFFF';
+  let pollInterval = null;
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.tab-btn.active')?.classList.remove('active');
+      document.querySelector('.tab-content.active')?.classList.remove('active');
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab)?.classList.add('active');
+    });
+  });
+
+  // Check if host
+  fetch(`${API}/is-host`).then(r => r.json()).then(data => {
+    if (data.host) {
+      document.getElementById('admin-tab-btn').style.display = '';
+    }
+  }).catch(() => {});
 
   // Color selection
   document.querySelectorAll('.color-btn').forEach(btn => {
@@ -398,18 +659,34 @@
         pipWindow.document.head.appendChild(style);
       }
 
-      // Clone container into PiP window
+      // Clone entire container into PiP window
       const clone = document.querySelector('.container').cloneNode(true);
-      // Remove the Mini Window button from clone
       clone.querySelector('#pip-btn')?.remove();
       pipWindow.document.body.appendChild(clone);
 
-      // Wire up events on cloned elements
+      // Show admin tab if host
+      fetch(`${API}/is-host`).then(r => r.json()).then(data => {
+        if (data.host) {
+          const ab = clone.querySelector('#admin-tab-btn');
+          if (ab) ab.style.display = '';
+        }
+      }).catch(() => {});
+
+      // Tab switching in PiP
+      clone.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          clone.querySelector('.tab-btn.active')?.classList.remove('active');
+          clone.querySelector('.tab-content.active')?.classList.remove('active');
+          btn.classList.add('active');
+          clone.querySelector('#' + btn.dataset.tab)?.classList.add('active');
+        });
+      });
+
+      // Wire up comment events
       const pipInput = clone.querySelector('#comment-input');
       const pipSendBtn = clone.querySelector('#send-btn');
       pipInput.focus();
 
-      // Color selection
       clone.querySelectorAll('.color-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           clone.querySelector('.color-btn.selected')?.classList.remove('selected');
@@ -418,7 +695,6 @@
         });
       });
 
-      // Send comment
       async function pipSendComment() {
         const text = pipInput.value.trim();
         if (!text) return;
@@ -446,7 +722,6 @@
         }
       });
 
-      // Firework
       clone.querySelector('#firework-btn')?.addEventListener('click', async () => {
         try {
           await fetch(`${API}/effect`, {
@@ -461,10 +736,245 @@
         } catch (e) {}
       });
 
+      clone.querySelectorAll('.reaction-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await fetch(`${API}/comment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: btn.dataset.emoji,
+                color: '#FFFFFF',
+                size: 'big',
+                type: 'scroll',
+              }),
+            });
+          } catch (e) {}
+        });
+      });
+
+      // Wire up admin events in PiP
+      const pipChoices = clone.querySelector('#poll-choices');
+      clone.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (pipChoices && pipChoices.children.length > 2) btn.parentElement.remove();
+        });
+      });
+
+      const pipAddBtn = clone.querySelector('.btn-secondary');
+      if (pipAddBtn) {
+        pipAddBtn.addEventListener('click', () => {
+          const count = pipChoices.children.length;
+          const nextKey = String.fromCharCode(65 + count);
+          const row = document.createElement('div');
+          row.className = 'choice-row';
+          row.innerHTML = `
+            <input type="text" class="admin-input choice-key" value="${nextKey}" placeholder="Key">
+            <input type="text" class="admin-input choice-label" placeholder="Choice label">
+            <button class="remove-btn">x</button>
+          `;
+          row.querySelector('.remove-btn').addEventListener('click', function() {
+            if (pipChoices.children.length > 2) this.parentElement.remove();
+          });
+          pipChoices.appendChild(row);
+        });
+      }
+
+      const pipStartBtn = clone.querySelector('#start-btn');
+      const pipStopBtn = clone.querySelector('#stop-btn');
+      const pipBadge = clone.querySelector('#status-badge');
+      const pipResultsSection = clone.querySelector('#results-section');
+      const pipResults = clone.querySelector('#poll-results');
+      let pipPollInterval = null;
+
+      if (pipStartBtn) {
+        pipStartBtn.addEventListener('click', async () => {
+          const q = clone.querySelector('#poll-question').value.trim();
+          if (!q) return alert('Please enter a question');
+          const rows = clone.querySelectorAll('#poll-choices .choice-row');
+          const choices = [];
+          for (const row of rows) {
+            const key = row.querySelector('.choice-key').value.trim();
+            const label = row.querySelector('.choice-label').value.trim();
+            if (key && label) choices.push({ key, label });
+          }
+          if (choices.length < 2) return alert('Please add at least 2 choices');
+          try {
+            await fetch(`${API}/poll/start`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: q, choices }),
+            });
+            pipStartBtn.style.display = 'none';
+            pipStopBtn.style.display = '';
+            pipBadge.textContent = 'Active';
+            pipBadge.className = 'status-badge status-active';
+            pipResultsSection.style.display = '';
+            if (pipPollInterval) clearInterval(pipPollInterval);
+            pipPollInterval = setInterval(() => pipUpdateResults(), 1000);
+            pipUpdateResults();
+          } catch (e) { alert('Failed to start poll'); }
+        });
+      }
+
+      if (pipStopBtn) {
+        pipStopBtn.addEventListener('click', async () => {
+          try {
+            await fetch(`${API}/poll/stop`, { method: 'POST' });
+            pipStartBtn.style.display = '';
+            pipStopBtn.style.display = 'none';
+            pipBadge.textContent = 'Inactive';
+            pipBadge.className = 'status-badge status-inactive';
+            if (pipPollInterval) { clearInterval(pipPollInterval); pipPollInterval = null; }
+          } catch (e) { alert('Failed to stop poll'); }
+        });
+      }
+
+      async function pipUpdateResults() {
+        try {
+          const res = await fetch(`${API}/poll/status`);
+          const data = await res.json();
+          const total = data.choices.reduce((s, c) => s + c.count, 0);
+          pipResults.innerHTML = data.choices.map(c => {
+            const pct = total > 0 ? (c.count / total * 100) : 0;
+            return `<div class="result-row"><span class="result-key">${c.key}</span><span class="result-label">${c.label}</span><div class="result-bar-bg"><div class="result-bar" style="width:${pct}%"></div></div><span class="result-count">${c.count} (${pct.toFixed(0)}%)</span></div>`;
+          }).join('');
+          if (!data.active && pipPollInterval) {
+            pipStartBtn.style.display = '';
+            pipStopBtn.style.display = 'none';
+            pipBadge.textContent = 'Inactive';
+            pipBadge.className = 'status-badge status-inactive';
+            clearInterval(pipPollInterval); pipPollInterval = null;
+          }
+        } catch (e) {}
+      }
+
+      pipWindow.addEventListener('unload', () => {
+        if (pipPollInterval) clearInterval(pipPollInterval);
+      });
+
     } catch (e) {
       showToast('Failed to open mini window');
     }
   });
+
+  // === Admin / Poll ===
+
+  function addChoice() {
+    const container = document.getElementById('poll-choices');
+    const count = container.children.length;
+    const nextKey = String.fromCharCode(65 + count);
+    const row = document.createElement('div');
+    row.className = 'choice-row';
+    row.innerHTML = `
+      <input type="text" class="admin-input choice-key" value="${nextKey}" placeholder="Key">
+      <input type="text" class="admin-input choice-label" placeholder="Choice label">
+      <button class="remove-btn" onclick="removeChoice(this)">x</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function removeChoice(btn) {
+    const container = document.getElementById('poll-choices');
+    if (container.children.length > 2) {
+      btn.parentElement.remove();
+    }
+  }
+
+  async function startPoll() {
+    const question = document.getElementById('poll-question').value.trim();
+    if (!question) return alert('Please enter a question');
+
+    const rows = document.querySelectorAll('#poll-choices .choice-row');
+    const choices = [];
+    for (const row of rows) {
+      const key = row.querySelector('.choice-key').value.trim();
+      const label = row.querySelector('.choice-label').value.trim();
+      if (key && label) {
+        choices.push({ key, label });
+      }
+    }
+
+    if (choices.length < 2) return alert('Please add at least 2 choices');
+
+    try {
+      await fetch(`${API}/poll/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, choices }),
+      });
+
+      document.getElementById('start-btn').style.display = 'none';
+      document.getElementById('stop-btn').style.display = '';
+      document.getElementById('status-badge').textContent = 'Active';
+      document.getElementById('status-badge').className = 'status-badge status-active';
+      document.getElementById('results-section').style.display = '';
+
+      startPolling();
+    } catch (e) {
+      alert('Failed to start poll');
+    }
+  }
+
+  async function stopPoll() {
+    try {
+      await fetch(`${API}/poll/stop`, { method: 'POST' });
+
+      document.getElementById('start-btn').style.display = '';
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('status-badge').textContent = 'Inactive';
+      document.getElementById('status-badge').className = 'status-badge status-inactive';
+
+      stopPolling();
+    } catch (e) {
+      alert('Failed to stop poll');
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    updateResults();
+    pollInterval = setInterval(updateResults, 1000);
+  }
+
+  function stopPolling() {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  }
+
+  async function updateResults() {
+    try {
+      const res = await fetch(`${API}/poll/status`);
+      const data = await res.json();
+
+      const container = document.getElementById('poll-results');
+      const total = data.choices.reduce((sum, c) => sum + c.count, 0);
+
+      container.innerHTML = data.choices.map(c => {
+        const pct = total > 0 ? (c.count / total * 100) : 0;
+        return `
+          <div class="result-row">
+            <span class="result-key">${c.key}</span>
+            <span class="result-label">${c.label}</span>
+            <div class="result-bar-bg">
+              <div class="result-bar" style="width:${pct}%"></div>
+            </div>
+            <span class="result-count">${c.count} (${pct.toFixed(0)}%)</span>
+          </div>
+        `;
+      }).join('');
+
+      if (!data.active && pollInterval) {
+        document.getElementById('start-btn').style.display = '';
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('status-badge').textContent = 'Inactive';
+        document.getElementById('status-badge').className = 'status-badge status-inactive';
+        stopPolling();
+      }
+    } catch (e) {}
+  }
 
   // Toast
   function showToast(msg) {
