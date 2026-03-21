@@ -1,16 +1,38 @@
-# textxover
+<p align="center">
+  <img src="resources/AppIcon.iconset/icon_256x256.png" width="128" alt="textxover icon">
+</p>
 
-A macOS overlay app that displays niconico-style scrolling comments on your screen. Comments flow right-to-left over a transparent window that is visible in screen sharing.
+<h1 align="center">textxover</h1>
 
-Built for use with Google Meet (via a browser extension) or any HTTP client.
+<p align="center">
+  A macOS overlay app that displays niconico-style scrolling comments, emoji reactions, and fireworks on your screen.<br>
+  GPU-accelerated, visible in screen sharing, and shareable via one-click tunnel.
+</p>
+
+<p align="center">
+  <img src="resources/ss01.png" width="720" alt="Comments and fireworks in action">
+</p>
+
+<p align="center">
+  <img src="resources/ss02.png" width="280" alt="Menu bar controls">
+  <img src="resources/ss03.png" width="280" alt="WebUI for commenting">
+</p>
+
+<p align="center">
+  <img src="resources/ss04.png" width="280" alt="Live poll with results">
+  <img src="resources/ss05.png" width="280" alt="Mini window (PiP)">
+</p>
 
 ## Features
 
 - **Scrolling comments** — right-to-left, top-fixed, or bottom-fixed
+- **Emoji reactions** — one-tap reactions visible on the overlay
+- **Fireworks** — GPU-computed particle effects
 - **Transparent overlay** — always on top, mouse-transparent, visible in screen sharing
 - **GPU-accelerated** — wgpu/Metal rendering at 60fps
 - **HTTP API** — send comments and effects via `localhost:8080`
 - **WebUI** — browser-based comment form at `/ui` with color, size, and position options
+- **Live polls** — host can start polls, participants vote from WebUI, results rendered in real-time
 - **Mini Window** — Document Picture-in-Picture mode so you can comment while on another tab
 - **Shareable** — one-click cloudflared tunnel to share the WebUI with others (auto-downloaded on first use)
 - **Menu bar app** — speed/opacity sliders, display selection, no Dock icon
