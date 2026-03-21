@@ -8,7 +8,7 @@ use crate::comments::CommentManager;
 use crate::effects::EffectManager;
 use crate::types::{Config, Particle, QuadVertex};
 
-const MAX_PARTICLES: usize = 10000;
+const MAX_PARTICLES: usize = 50000;
 
 pub struct CommentTexture {
     texture: wgpu::Texture,

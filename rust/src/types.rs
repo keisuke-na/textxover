@@ -152,5 +152,6 @@ pub struct Particle {
     pub color: [f32; 4],
     pub life: f32,
     pub size: f32,
-    pub _padding: [f32; 2],
+    pub phase: f32,        // 0=launch, 1=burst
+    pub initial_life: f32, // original life for color transition ratio
 }
