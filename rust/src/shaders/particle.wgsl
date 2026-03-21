@@ -41,7 +41,7 @@ fn cs_main(@builtin(global_invocation_id) id: vec3<u32>) {
     if p.phase == 0.0 {
         // === Launch phase ===
         // Rise upward, decelerating due to gravity
-        p.velocity.y += 400.0 * params.delta_time; // strong upward deceleration
+        p.velocity.y += 1200.0 * params.delta_time; // gravity deceleration
         p.position += p.velocity * params.delta_time;
         p.color.a = 1.0;
 

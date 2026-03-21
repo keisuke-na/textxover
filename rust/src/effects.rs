@@ -23,23 +23,14 @@ impl EffectManager {
         let origin_y = y * screen_height;
         let hue: f32 = rng.gen_range(0.0..360.0);
 
-        // Launch particle: fixed initial velocity, gravity decelerates
-        // Physics: y = y0 + vy*t + 0.5*g*t^2 (g=400 in shader)
-        let launch_speed = 1200.0;
-        let gravity = 400.0;
+        // Launch particle: arrives at target with zero velocity (like real fireworks)
+        // Physics: v_final=0 → v=g*t, d=0.5*g*t² → t=sqrt(2d/g), v=sqrt(2gd)
+        let gravity = 1200.0;
         let vx = rng.gen_range(-15.0..15.0);
-
-        // Solve for t when particle reaches origin_y:
-        // origin_y = screen_height - launch_speed*t + 0.5*400*t^2
-        // 200*t^2 - launch_speed*t + (screen_height - origin_y) = 0 (not needed, just use quadratic)
         let distance = screen_height - origin_y;
-        // t = (v - sqrt(v^2 - 2*g*d)) / g
-        let discriminant = launch_speed * launch_speed - 2.0 * gravity * distance;
-        let launch_life = if discriminant > 0.0 {
-            (launch_speed - discriminant.sqrt()) / gravity
-        } else {
-            distance / launch_speed // fallback
-        };
+
+        let launch_life = (2.0 * distance / gravity).sqrt();
+        let launch_speed = gravity * launch_life;
 
         // Calculate exact final position using same physics
         let final_x = origin_x + vx * launch_life;
