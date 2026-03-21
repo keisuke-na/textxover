@@ -1,15 +1,17 @@
 use crate::types::Particle;
 use rand::Rng;
 
+/// CPU-side particle factory. Only responsible for spawning initial particle data.
+/// Physics simulation runs on GPU via compute shader.
 pub struct EffectManager {
-    particles: Vec<Particle>,
+    pending: Vec<Particle>,
     max_particles: usize,
 }
 
 impl EffectManager {
     pub fn new(max_particles: usize) -> Self {
         EffectManager {
-            particles: Vec::new(),
+            pending: Vec::new(),
             max_particles,
         }
     }
@@ -18,62 +20,33 @@ impl EffectManager {
         let mut rng = rand::thread_rng();
         let count = rng.gen_range(200..=500);
 
-        // Choose a random base color
         let hue: f32 = rng.gen_range(0.0..360.0);
 
         for _ in 0..count {
-            if self.particles.len() >= self.max_particles {
+            if self.pending.len() >= self.max_particles {
                 break;
             }
 
             let angle: f32 = rng.gen_range(0.0..std::f32::consts::TAU);
             let speed: f32 = rng.gen_range(50.0..400.0);
 
-            // Vary hue slightly per particle
             let h = hue + rng.gen_range(-30.0..30.0);
             let (r, g, b) = hsv_to_rgb(h.rem_euclid(360.0), 0.8, 1.0);
 
-            let particle = Particle {
+            self.pending.push(Particle {
                 position: [x * screen_width, y * screen_height],
                 velocity: [angle.cos() * speed, angle.sin() * speed],
                 color: [r, g, b, 1.0],
                 life: rng.gen_range(1.5..3.0),
-                size: rng.gen_range(2.0..6.0),
+                size: rng.gen_range(4.0..10.0),
                 _padding: [0.0; 2],
-            };
-
-            self.particles.push(particle);
+            });
         }
     }
 
-    pub fn update(&mut self, dt: f32) {
-        let gravity = 150.0;
-        let drag = 0.5;
-
-        for p in &mut self.particles {
-            if p.life <= 0.0 {
-                continue;
-            }
-
-            p.velocity[1] += gravity * dt;
-            p.velocity[0] *= 1.0 - drag * dt;
-            p.velocity[1] *= 1.0 - drag * dt;
-            p.position[0] += p.velocity[0] * dt;
-            p.position[1] += p.velocity[1] * dt;
-            p.life -= dt;
-            p.color[3] = (p.life * 2.0).clamp(0.0, 1.0);
-            p.size = (p.size - dt * 2.0).max(0.5);
-        }
-
-        self.particles.retain(|p| p.life > 0.0);
-    }
-
-    pub fn particles(&self) -> &[Particle] {
-        &self.particles
-    }
-
-    pub fn active_count(&self) -> u32 {
-        self.particles.len() as u32
+    /// Drain newly spawned particles for upload to GPU buffer.
+    pub fn drain_pending(&mut self) -> Vec<Particle> {
+        std::mem::take(&mut self.pending)
     }
 }
 

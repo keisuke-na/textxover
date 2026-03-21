@@ -26,8 +26,10 @@ bundle: build-swift
         @executable_path/libtextxover.dylib \
         textxover.app/Contents/MacOS/textxover
 
-# Build + run
+# Build + run (kills existing process first)
 run: bundle
+    -pkill -f textxover.app/Contents/MacOS/textxover
+    sleep 1
     open textxover.app
 
 # Test: send comment

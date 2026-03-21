@@ -320,7 +320,7 @@ pub extern "C" fn txo_render_frame(handle: *mut std::ffi::c_void) {
         .store(state.renderer.comment_manager.active_count(), std::sync::atomic::Ordering::Relaxed);
     state
         .active_particles
-        .store(state.renderer.effect_manager.active_count(), std::sync::atomic::Ordering::Relaxed);
+        .store(state.renderer.particle_count(), std::sync::atomic::Ordering::Relaxed);
 
     // Render
     state.renderer.render(dt);
