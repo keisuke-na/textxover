@@ -79,6 +79,7 @@ class TextRasterizer {
             context.restoreGState()
 
             // Outline
+            context.setLineJoin(.round)
             let outlineStr = NSAttributedString(string: line, attributes: [
                 .font: drawFont,
                 .foregroundColor: NSColor.clear,
