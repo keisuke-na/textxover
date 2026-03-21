@@ -2,10 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>textxover</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { touch-action: manipulation; }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -295,8 +296,9 @@
   }
 
   .remove-btn {
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
+    align-self: stretch;
     border-radius: 6px;
     border: 1px solid #555;
     background: transparent;
