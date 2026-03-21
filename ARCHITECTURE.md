@@ -20,7 +20,7 @@ AppDelegate ─────────────┼── FFI calls (txo_*)
   Menu bar UI            │
                          ├── Comment manager (lanes, animation)
                          ├── Effect manager (particles)
-                         └── axum HTTP server (localhost:8080)
+                         └── axum HTTP server (localhost:2525)
 ```
 
 ## Project Structure

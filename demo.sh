@@ -1,7 +1,7 @@
 #!/bin/bash
 # Demo script: simulates live audience reactions
 
-BASE="http://localhost:8080"
+BASE="http://localhost:2525"
 
 comments=(
   "Great talk!"

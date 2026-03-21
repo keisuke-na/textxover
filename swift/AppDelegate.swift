@@ -6,7 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var overlayWindow: OverlayWindow!
     var rustHandle: UnsafeMutableRawPointer?
     var displayLink: CVDisplayLink?
-    var serverPort: UInt16 = 8080
+    var serverPort: UInt16 = 2525
     var screenScale: CGFloat = 2.0
     var currentSpeed: Float = 1.0
     var currentOpacity: Float = 1.0

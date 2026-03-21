@@ -30,7 +30,7 @@
 - **Fireworks** — GPU-computed particle effects
 - **Transparent overlay** — always on top, mouse-transparent, visible in screen sharing
 - **GPU-accelerated** — wgpu/Metal rendering at 60fps
-- **HTTP API** — send comments and effects via `localhost:8080`
+- **HTTP API** — send comments and effects via `localhost:2525`
 - **WebUI** — browser-based comment form at `/ui` with color, size, and position options
 - **Live polls** — host can start polls, participants vote from WebUI, results rendered in real-time
 - **Mini Window** — Document Picture-in-Picture mode so you can comment while on another tab
@@ -53,21 +53,21 @@ brew install just
 just run
 ```
 
-The app starts in the menu bar as **TX**. A server runs at `http://localhost:8080`.
+The app starts in the menu bar as **TX**. A server runs at `http://localhost:2525`.
 
 ## Sending Comments
 
 ### Via curl
 
 ```bash
-curl -X POST http://localhost:8080/comment \
+curl -X POST http://localhost:2525/comment \
   -H 'Content-Type: application/json' \
   -d '{"text":"Hello!", "size":"big", "type":"scroll"}'
 ```
 
 ### Via WebUI
 
-Open `http://localhost:8080/ui` in your browser.
+Open `http://localhost:2525/ui` in your browser.
 
 ### Via Google Meet extension
 

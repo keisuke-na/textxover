@@ -35,19 +35,19 @@ run: bundle
 
 # Test: send comment
 test-comment:
-    curl -X POST http://localhost:8080/comment \
+    curl -X POST http://localhost:2525/comment \
         -H "Content-Type: application/json" \
         -d '{"text":"テスト！","color":"#FF0000","size":"big"}'
 
 # Test: firework
 test-firework:
-    curl -X POST http://localhost:8080/effect \
+    curl -X POST http://localhost:2525/effect \
         -H "Content-Type: application/json" \
         -d '{"type":"firework","x":0.5,"y":0.5}'
 
 # Test: status
 test-status:
-    curl http://localhost:8080/status
+    curl http://localhost:2525/status
 
 clean:
     cd rust && cargo clean
