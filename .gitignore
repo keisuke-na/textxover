@@ -2,3 +2,8 @@
 textxover
 textxover.app/
 rust/target/
+*.zip
+
+# macOS
+.DS_Store
+
