@@ -336,6 +336,25 @@ pub extern "C" fn txo_remove_comment(handle: *mut std::ffi::c_void, comment_id: 
     state.renderer.remove_texture(comment_id);
 }
 
+/// Update texture and reset life for an existing comment (no flicker)
+#[no_mangle]
+pub extern "C" fn txo_update_texture(
+    handle: *mut std::ffi::c_void,
+    comment_id: u32,
+    width: u32,
+    height: u32,
+    rgba_data: *const u8,
+    data_len: u32,
+) {
+    if handle.is_null() || rgba_data.is_null() {
+        return;
+    }
+    let state = unsafe { &mut *(handle as *mut AppState) };
+    let data = unsafe { std::slice::from_raw_parts(rgba_data, data_len as usize) };
+    state.renderer.submit_texture(comment_id, width, height, data);
+    state.renderer.comment_manager.reset_life(comment_id, 999.0);
+}
+
 #[no_mangle]
 pub extern "C" fn txo_get_poll_json(handle: *mut std::ffi::c_void) -> *mut std::ffi::c_char {
     if handle.is_null() {

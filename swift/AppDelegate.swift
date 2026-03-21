@@ -17,8 +17,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var shareMenuItem: NSMenuItem?
     var tunnelURLMenuItem: NSMenuItem?
     var copyURLMenuItem: NSMenuItem?
-    var pollOverlayCommentId: UInt32 = 0
-    var nextPollCommentId: UInt32 = 900000 // high range to avoid collision with regular comments
+    let pollOverlayCommentId: UInt32 = 900000 // fixed ID for poll overlay
+    var pollOverlayActive = false
     var lastPollUpdateTime: CFTimeInterval = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -127,8 +127,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Poll Overlay
 
+    var pollUpdateInProgress = false
+
     func updatePollOverlay() {
-        guard let handle = rustHandle else { return }
+        guard let handle = rustHandle, !pollUpdateInProgress else { return }
 
         guard let jsonPtr = txo_get_poll_json(handle) else { return }
         let jsonString = String(cString: jsonPtr)
@@ -139,68 +141,77 @@ class AppDelegate: NSObject, NSApplicationDelegate {
               let active = json["active"] as? Bool else { return }
 
         if !active {
-            if pollOverlayCommentId != 0 {
+            if pollOverlayActive {
                 txo_remove_comment(handle, pollOverlayCommentId)
-                pollOverlayCommentId = 0
+                pollOverlayActive = false
             }
             return
         }
 
-        // Poll is active - rasterize graph
         guard let question = json["question"] as? String,
               let choices = json["choices"] as? [[String: Any]] else { return }
 
-        // Build terminal-style bar text
-        let totalVotes = choices.reduce(0) { $0 + (($1["count"] as? Int) ?? 0) }
-        let barWidth = 20
-        let maxLabelLen = choices.reduce(0) { max($0, (($1["label"] as? String) ?? "").count) }
-        let padLen = max(maxLabelLen, 4)
-        var lines: [String] = [question]
-        for c in choices {
-            let key = c["key"] as? String ?? ""
-            let label = c["label"] as? String ?? ""
-            let count = c["count"] as? Int ?? 0
-            let pct = totalVotes > 0 ? Double(count) / Double(totalVotes) : 0
-            let filled = Int(round(pct * Double(barWidth)))
-            let bar = String(repeating: "█", count: filled) + String(repeating: "░", count: barWidth - filled)
-            let paddedLabel = label.padding(toLength: padLen, withPad: " ", startingAt: 0)
-            let line = "\(key) \(paddedLabel) \(bar) \(count) (\(Int(pct * 100))%)"
-            lines.append(line)
-        }
-        let pollText = lines.joined(separator: "\n")
-
-        let fontSize: CGFloat = 42 * screenScale
-        let rasterized = TextRasterizer.rasterize(text: pollText, color: .white, fontSize: fontSize)
-
-        guard rasterized.width > 0 && rasterized.height > 0 else { return }
-
-        // Remove previous poll overlay
-        if pollOverlayCommentId != 0 {
-            txo_remove_comment(handle, pollOverlayCommentId)
-        }
-
-        // Assign a new comment ID for this poll overlay frame
-        nextPollCommentId += 1
-        let commentId = nextPollCommentId
-        pollOverlayCommentId = commentId
-
-        // Submit texture
-        rasterized.rgba.withUnsafeBufferPointer { buffer in
-            guard let baseAddress = buffer.baseAddress else { return }
-            txo_submit_texture(
-                handle,
-                commentId,
-                UInt32(rasterized.width),
-                UInt32(rasterized.height),
-                baseAddress,
-                UInt32(rasterized.rgba.count)
+        let pollChoices = choices.map { c in
+            TextRasterizer.PollChoice(
+                key: c["key"] as? String ?? "",
+                label: c["label"] as? String ?? "",
+                count: c["count"] as? Int ?? 0
             )
         }
 
-        // Place at vertical center of screen
-        let screenHeight = overlayWindow.frame.height * screenScale
-        let centerY = (screenHeight - CGFloat(rasterized.height)) / 2.0
-        txo_start_comment(handle, commentId, 1, Float(centerY))
+        pollUpdateInProgress = true
+
+        TextRasterizer.rasterizePollGraph(
+            question: question,
+            choices: pollChoices,
+            scale: screenScale
+        ) { [weak self] rasterized in
+            guard let self = self, let handle = self.rustHandle else {
+                self?.pollUpdateInProgress = false
+                return
+            }
+            guard rasterized.width > 0 && rasterized.height > 0 else {
+                self.pollUpdateInProgress = false
+                return
+            }
+
+            let commentId = self.pollOverlayCommentId
+
+            if self.pollOverlayActive {
+                // Update texture in place (no flicker)
+                rasterized.rgba.withUnsafeBufferPointer { buffer in
+                    guard let baseAddress = buffer.baseAddress else { return }
+                    txo_update_texture(
+                        handle,
+                        commentId,
+                        UInt32(rasterized.width),
+                        UInt32(rasterized.height),
+                        baseAddress,
+                        UInt32(rasterized.rgba.count)
+                    )
+                }
+            } else {
+                // First time: submit texture + start comment
+                rasterized.rgba.withUnsafeBufferPointer { buffer in
+                    guard let baseAddress = buffer.baseAddress else { return }
+                    txo_submit_texture(
+                        handle,
+                        commentId,
+                        UInt32(rasterized.width),
+                        UInt32(rasterized.height),
+                        baseAddress,
+                        UInt32(rasterized.rgba.count)
+                    )
+                }
+
+                let screenHeight = self.overlayWindow.frame.height * self.screenScale
+                let centerY = (screenHeight - CGFloat(rasterized.height)) / 2.0
+                txo_start_comment(handle, commentId, 1, Float(centerY))
+                self.pollOverlayActive = true
+            }
+
+            self.pollUpdateInProgress = false
+        }
     }
 
     // MARK: - Menu Bar

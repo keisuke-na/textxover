@@ -1,5 +1,6 @@
 import AppKit
 import CoreText
+import WebKit
 
 struct RasterizedText {
     let rgba: [UInt8]
@@ -106,135 +107,162 @@ class TextRasterizer {
         let count: Int
     }
 
-    static func rasterizePollGraph(question: String, choices: [PollChoice], scale: CGFloat) -> RasterizedText {
-        let padding: CGFloat = 20 * scale
-        let fontSize: CGFloat = 18 * scale
-        let questionFontSize: CGFloat = 22 * scale
-        let barHeight: CGFloat = 28 * scale
-        let rowSpacing: CGFloat = 8 * scale
-        let barMaxWidth: CGFloat = 300 * scale
-        let labelWidth: CGFloat = 120 * scale
-        let keyWidth: CGFloat = 30 * scale
-        let countWidth: CGFloat = 70 * scale
+    private static var pollWebView: WKWebView?
+
+    static func rasterizePollGraph(question: String, choices: [PollChoice], scale: CGFloat, completion: @escaping (RasterizedText) -> Void) {
+        let fixedWidth = 900
+        let rowHeight = 68
+        let fixedHeight = 100 + choices.count * rowHeight + 30
 
         let totalVotes = choices.reduce(0) { $0 + $1.count }
-        let rowCount = CGFloat(choices.count)
-        let contentWidth = keyWidth + labelWidth + barMaxWidth + countWidth + 30 * scale
-        let contentHeight = questionFontSize + 16 * scale + rowCount * (barHeight + rowSpacing)
+        let barColors = ["#e84560", "#3399dd", "#4cc77a", "#f5a623", "#9c59d9", "#00ccca"]
 
-        let width = Int(ceil(contentWidth + padding * 2))
-        let height = Int(ceil(contentHeight + padding * 2))
-
-        guard width > 0 && height > 0 else {
-            return RasterizedText(rgba: [], width: 0, height: 0)
+        var rowsHTML = ""
+        for (i, c) in choices.enumerated() {
+            let pct = totalVotes > 0 ? Double(c.count) / Double(totalVotes) * 100 : 0
+            let color = barColors[i % barColors.count]
+            rowsHTML += """
+            <div class="row">
+              <span class="key">\(escapeHTML(c.key))</span>
+              <span class="label">\(escapeHTML(c.label))</span>
+              <div class="bar-bg"><div class="bar" style="width:\(pct)%;background:\(color)"></div></div>
+              <span class="count">\(c.count) (\(Int(pct))%)</span>
+            </div>
+            """
         }
 
-        let bytesPerRow = width * 4
-        var pixels = [UInt8](repeating: 0, count: bytesPerRow * height)
+        let html = """
+        <!DOCTYPE html>
+        <html><head><style>
+          * { margin:0; padding:0; box-sizing:border-box; }
+          body {
+            width: \(fixedWidth)px;
+            height: \(fixedHeight)px;
+            background: rgba(10,10,30,0.88);
+            border-radius: 14px;
+            padding: 30px 36px;
+            font-family: -apple-system, sans-serif;
+            color: #fff;
+            overflow: hidden;
+          }
+          .question {
+            font-size: 34px;
+            font-weight: bold;
+            margin-bottom: 22px;
+          }
+          .row {
+            display: flex;
+            align-items: center;
+            height: \(rowHeight - 12)px;
+            margin-bottom: 12px;
+            gap: 14px;
+          }
+          .key {
+            width: 44px;
+            font-weight: bold;
+            color: #f5a623;
+            font-size: 28px;
+            flex-shrink: 0;
+          }
+          .label {
+            width: 180px;
+            font-size: 26px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 0;
+          }
+          .bar-bg {
+            flex: 1;
+            height: 34px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            overflow: hidden;
+          }
+          .bar {
+            height: 100%;
+            border-radius: 6px;
+            min-width: 2px;
+            transition: width 0.3s;
+          }
+          .count {
+            width: 140px;
+            text-align: right;
+            font-size: 22px;
+            color: #aaa;
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+          }
+        </style></head>
+        <body>
+          <div class="question">\(escapeHTML(question))</div>
+          \(rowsHTML)
+        </body></html>
+        """
 
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        guard let ctx = CGContext(
-            data: &pixels,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: bytesPerRow,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return RasterizedText(rgba: [], width: 0, height: 0)
+        DispatchQueue.main.async {
+            let pxWidth = fixedWidth * Int(scale)
+            let pxHeight = fixedHeight * Int(scale)
+
+            if pollWebView == nil {
+                let config = WKWebViewConfiguration()
+                let wv = WKWebView(frame: NSRect(x: 0, y: 0, width: fixedWidth, height: fixedHeight), configuration: config)
+                wv.setValue(false, forKey: "drawsBackground")
+                pollWebView = wv
+            }
+
+            guard let wv = pollWebView else {
+                completion(RasterizedText(rgba: [], width: 0, height: 0))
+                return
+            }
+            wv.frame = NSRect(x: 0, y: 0, width: fixedWidth, height: fixedHeight)
+
+            wv.loadHTMLString(html, baseURL: nil)
+
+            // Wait for render
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                let snapshotConfig = WKSnapshotConfiguration()
+                snapshotConfig.snapshotWidth = NSNumber(value: fixedWidth)
+
+                wv.takeSnapshot(with: snapshotConfig) { image, error in
+                    guard let image = image,
+                          let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                        completion(RasterizedText(rgba: [], width: 0, height: 0))
+                        return
+                    }
+
+                    // Render to RGBA bitmap at screen scale
+                    let w = pxWidth
+                    let h = pxHeight
+                    let bytesPerRow = w * 4
+                    var pixels = [UInt8](repeating: 0, count: bytesPerRow * h)
+
+                    let colorSpace = CGColorSpaceCreateDeviceRGB()
+                    guard let ctx = CGContext(
+                        data: &pixels,
+                        width: w,
+                        height: h,
+                        bitsPerComponent: 8,
+                        bytesPerRow: bytesPerRow,
+                        space: colorSpace,
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                    ) else {
+                        completion(RasterizedText(rgba: [], width: 0, height: 0))
+                        return
+                    }
+
+                    ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: w, height: h))
+                    completion(RasterizedText(rgba: pixels, width: w, height: h))
+                }
+            }
         }
+    }
 
-        // Background (semi-transparent dark)
-        ctx.setFillColor(NSColor(red: 0.05, green: 0.05, blue: 0.15, alpha: 0.85).cgColor)
-        ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
-
-        // Rounded corners
-        let bgRect = CGRect(x: 0, y: 0, width: width, height: height)
-        let bgPath = CGPath(roundedRect: bgRect, cornerWidth: 12 * scale, cornerHeight: 12 * scale, transform: nil)
-        ctx.clear(bgRect)
-        ctx.addPath(bgPath)
-        ctx.setFillColor(NSColor(red: 0.05, green: 0.05, blue: 0.15, alpha: 0.85).cgColor)
-        ctx.fillPath()
-
-        // Question text (top, white)
-        let questionFont = NSFont.boldSystemFont(ofSize: questionFontSize)
-        let questionAttrs: [NSAttributedString.Key: Any] = [
-            .font: questionFont,
-            .foregroundColor: NSColor.white,
-        ]
-        let questionStr = NSAttributedString(string: question, attributes: questionAttrs)
-        let questionLine = CTLineCreateWithAttributedString(questionStr)
-        ctx.textMatrix = .identity
-        // CGContext y is bottom-up
-        let questionY = CGFloat(height) - padding - questionFontSize
-        ctx.textPosition = CGPoint(x: padding, y: questionY)
-        CTLineDraw(questionLine, ctx)
-
-        // Bar colors
-        let barColors: [NSColor] = [
-            NSColor(red: 0.91, green: 0.27, blue: 0.38, alpha: 1.0), // red
-            NSColor(red: 0.20, green: 0.60, blue: 0.86, alpha: 1.0), // blue
-            NSColor(red: 0.30, green: 0.78, blue: 0.47, alpha: 1.0), // green
-            NSColor(red: 0.96, green: 0.65, blue: 0.14, alpha: 1.0), // orange
-            NSColor(red: 0.61, green: 0.35, blue: 0.86, alpha: 1.0), // purple
-            NSColor(red: 0.0, green: 0.80, blue: 0.78, alpha: 1.0),  // teal
-        ]
-
-        let font = NSFont.boldSystemFont(ofSize: fontSize)
-        let startY = questionY - 20 * scale
-
-        for (i, choice) in choices.enumerated() {
-            let rowY = startY - CGFloat(i) * (barHeight + rowSpacing)
-
-            // Key (e.g. "A")
-            let keyAttrs: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor(red: 0.96, green: 0.65, blue: 0.14, alpha: 1.0),
-            ]
-            let keyStr = NSAttributedString(string: choice.key, attributes: keyAttrs)
-            let keyLine = CTLineCreateWithAttributedString(keyStr)
-            ctx.textMatrix = .identity
-            ctx.textPosition = CGPoint(x: padding, y: rowY)
-            CTLineDraw(keyLine, ctx)
-
-            // Label
-            let labelAttrs: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor.white,
-            ]
-            let labelStr = NSAttributedString(string: choice.label, attributes: labelAttrs)
-            let labelLine = CTLineCreateWithAttributedString(labelStr)
-            ctx.textPosition = CGPoint(x: padding + keyWidth, y: rowY)
-            CTLineDraw(labelLine, ctx)
-
-            // Bar background
-            let barX = padding + keyWidth + labelWidth
-            let barBgRect = CGRect(x: barX, y: rowY - 2 * scale, width: barMaxWidth, height: barHeight - 4 * scale)
-            ctx.setFillColor(NSColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0).cgColor)
-            ctx.fill(barBgRect)
-
-            // Bar fill
-            let pct = totalVotes > 0 ? CGFloat(choice.count) / CGFloat(totalVotes) : 0
-            let barFillWidth = max(barMaxWidth * pct, 2)
-            let barFillRect = CGRect(x: barX, y: rowY - 2 * scale, width: barFillWidth, height: barHeight - 4 * scale)
-            let colorIdx = i % barColors.count
-            ctx.setFillColor(barColors[colorIdx].cgColor)
-            ctx.fill(barFillRect)
-
-            // Count text
-            let countText = totalVotes > 0 ? "\(choice.count) (\(Int(pct * 100))%)" : "0"
-            let countAttrs: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize * 0.85, weight: .regular),
-                .foregroundColor: NSColor(red: 0.7, green: 0.7, blue: 0.7, alpha: 1.0),
-            ]
-            let countStr = NSAttributedString(string: countText, attributes: countAttrs)
-            let countLine = CTLineCreateWithAttributedString(countStr)
-            ctx.textPosition = CGPoint(x: barX + barMaxWidth + 8 * scale, y: rowY)
-            CTLineDraw(countLine, ctx)
-        }
-
-        return RasterizedText(rgba: pixels, width: width, height: height)
+    private static func escapeHTML(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;")
+         .replacingOccurrences(of: "<", with: "&lt;")
+         .replacingOccurrences(of: ">", with: "&gt;")
+         .replacingOccurrences(of: "\"", with: "&quot;")
     }
 
     static func parseColor(_ hex: String) -> NSColor {

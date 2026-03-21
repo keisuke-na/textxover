@@ -170,6 +170,16 @@ impl CommentManager {
         self.comments.retain(|c| c.id != id);
     }
 
+    /// Reset life of a comment (keep it alive)
+    pub fn reset_life(&mut self, id: u32, life: f32) {
+        for comment in &mut self.comments {
+            if comment.id == id {
+                comment.life = life;
+                break;
+            }
+        }
+    }
+
     pub fn active_comments(&self) -> &[Comment] {
         &self.comments
     }
