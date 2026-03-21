@@ -21,6 +21,7 @@ bundle: build-swift
     cp textxover textxover.app/Contents/MacOS/
     cp rust/target/release/libtextxover.dylib textxover.app/Contents/MacOS/
     cp resources/Info.plist textxover.app/Contents/
+    cp resources/AppIcon.icns textxover.app/Contents/Resources/
     install_name_tool -change \
         libtextxover.dylib \
         @executable_path/libtextxover.dylib \
