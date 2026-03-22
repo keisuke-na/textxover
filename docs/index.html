@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>textxover — Live Comment Overlay for macOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a1a;
+      color: #e0e0e0;
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 40px;
+      background: linear-gradient(180deg, #0f1029 0%, #0a0a1a 100%);
+    }
+
+    .hero img.icon {
+      width: 96px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    .hero .cta {
+      display: inline-block;
+      padding: 14px 32px;
+      background: #3399dd;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .hero .cta:hover { background: #2280c0; }
+
+    .hero .sub-link {
+      display: block;
+      margin-top: 12px;
+      color: #666;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .hero .sub-link:hover { color: #999; }
+
+    /* Screenshots */
+    .screenshots {
+      text-align: center;
+      padding: 40px 20px 60px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .screenshots .main-shot {
+      width: 100%;
+      max-width: 800px;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      margin-bottom: 32px;
+    }
+
+    .screenshots .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .screenshots .grid img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .screenshots .grid .caption {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* Features */
+    .features {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .features h2 {
+      text-align: center;
+      font-size: 32px;
+      color: #fff;
+      margin-bottom: 40px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .feature-card .emoji {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h3 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* Quick Start */
+    .quickstart {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .quickstart h2 {
+      font-size: 32px;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+
+    .quickstart pre {
+      background: #161625;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: left;
+      font-size: 14px;
+      color: #ccc;
+      overflow-x: auto;
+    }
+
+    .quickstart pre span.comment { color: #555; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: #444;
+      font-size: 13px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    footer a { color: #666; text-decoration: none; }
+    footer a:hover { color: #999; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 32px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .screenshots .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <img class="icon" src="images/icon.png" alt="textxover">
+    <h1>textxover</h1>
+    <p>Live scrolling comments, emoji reactions, and fireworks on your macOS screen. GPU-accelerated, visible in screen sharing.</p>
+    <a class="cta" href="https://github.com/keisuke-na/textxover/releases/latest">Download for macOS</a>
+    <a class="sub-link" href="https://github.com/keisuke-na/textxover">View on GitHub</a>
+  </section>
+
+  <section class="screenshots">
+    <img class="main-shot" src="images/ss01.png" alt="textxover in action">
+    <div class="grid">
+      <div>
+        <img src="images/ss02.png" alt="Menu bar">
+        <div class="caption">Menu bar controls</div>
+      </div>
+      <div>
+        <img src="images/ss03.png" alt="WebUI">
+        <div class="caption">Anyone can comment via WebUI</div>
+      </div>
+      <div>
+        <img src="images/ss04.png" alt="Poll">
+        <div class="caption">Live polls with real-time results</div>
+      </div>
+      <div>
+        <img src="images/ss05.png" alt="Mini window">
+        <div class="caption">Mini window (Picture-in-Picture)</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2>Features</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="emoji">💬</div>
+        <h3>Scrolling Comments</h3>
+        <p>Niconico-style comments flowing across the screen. Scroll, top-fixed, or bottom-fixed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">🎆</div>
+        <h3>Fireworks</h3>
+        <p>GPU-computed particle fireworks with realistic physics, trails, and color transitions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">😍</div>
+        <h3>Emoji Reactions</h3>
+        <p>One-tap emoji reactions that appear on the overlay in real-time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">📊</div>
+        <h3>Live Polls</h3>
+        <p>Start polls from the host UI. Participants vote from their browser, results update live.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">🔗</div>
+        <h3>One-Click Sharing</h3>
+        <p>Share a public URL via cloudflared tunnel. No setup needed — just click and share.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">⚡</div>
+        <h3>GPU-Accelerated</h3>
+        <p>wgpu/Metal rendering at 60fps. Transparent overlay visible in screen sharing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="quickstart">
+    <h2>Quick Start</h2>
+    <pre><span class="comment"># Install just (if not installed)</span>
+brew install just
+
+<span class="comment"># Clone and run</span>
+git clone https://github.com/keisuke-na/textxover.git
+cd textxover
+just run</pre>
+  </section>
+
+  <footer>
+    <p>MIT License &middot; <a href="https://github.com/keisuke-na/textxover">GitHub</a></p>
+  </footer>
+
+</body>
+</html>
